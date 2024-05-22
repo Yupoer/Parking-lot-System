@@ -25,53 +25,72 @@ class MainWindow(QtWidgets.QMainWindow):
         self.layout.addLayout(self.input_layout)
 
         self.label = QtWidgets.QLabel("車牌號碼:")
+        self.label.setStyleSheet("font-size: 16px;")
         self.input_layout.addWidget(self.label)
 
         self.license_input = QtWidgets.QLineEdit()
+        self.license_input.setStyleSheet("font-size: 16px;")
         self.input_layout.addWidget(self.license_input)
 
         self.park_button = QtWidgets.QPushButton("停車")
+        self.park_button.setStyleSheet("font-size: 16px;")
         self.park_button.clicked.connect(self.park_car)
         self.input_layout.addWidget(self.park_button)
 
         self.leave_button = QtWidgets.QPushButton("離開")
+        self.leave_button.setStyleSheet("font-size: 16px;")
         self.leave_button.clicked.connect(self.leave_car)
         self.input_layout.addWidget(self.leave_button)
 
-        self.query_space_layout = QtWidgets.QHBoxLayout()
+        self.query_space_layout = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.query_space_layout)
 
+        self.query_space_input_layout = QtWidgets.QHBoxLayout()
+        self.query_space_layout.addLayout(self.query_space_input_layout)
+
         self.query_space_label = QtWidgets.QLabel("查詢車位號碼:")
-        self.query_space_layout.addWidget(self.query_space_label)
+        self.query_space_label.setStyleSheet("font-size: 16px;")
+        self.query_space_input_layout.addWidget(self.query_space_label)
 
         self.space_input = QtWidgets.QLineEdit()
-        self.query_space_layout.addWidget(self.space_input)
+        self.space_input.setStyleSheet("font-size: 16px;")
+        self.query_space_input_layout.addWidget(self.space_input)
 
         self.query_space_button = QtWidgets.QPushButton("查詢")
+        self.query_space_button.setStyleSheet("font-size: 16px;")
         self.query_space_button.clicked.connect(self.query_space)
-        self.query_space_layout.addWidget(self.query_space_button)
+        self.query_space_input_layout.addWidget(self.query_space_button)
 
         self.result_space_label = QtWidgets.QLabel("")
+        self.result_space_label.setStyleSheet("font-size: 16px;")
         self.query_space_layout.addWidget(self.result_space_label)
 
-        self.query_car_layout = QtWidgets.QHBoxLayout()
+        self.query_car_layout = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.query_car_layout)
 
+        self.query_car_input_layout = QtWidgets.QHBoxLayout()
+        self.query_car_layout.addLayout(self.query_car_input_layout)
+
         self.query_car_label = QtWidgets.QLabel("查詢車牌號碼:")
-        self.query_car_layout.addWidget(self.query_car_label)
+        self.query_car_label.setStyleSheet("font-size: 16px;")
+        self.query_car_input_layout.addWidget(self.query_car_label)
 
         self.car_input = QtWidgets.QLineEdit()
-        self.query_car_layout.addWidget(self.car_input)
+        self.car_input.setStyleSheet("font-size: 16px;")
+        self.query_car_input_layout.addWidget(self.car_input)
 
         self.query_car_button = QtWidgets.QPushButton("查詢")
+        self.query_car_button.setStyleSheet("font-size: 16px;")
         self.query_car_button.clicked.connect(self.query_car)
-        self.query_car_layout.addWidget(self.query_car_button)
+        self.query_car_input_layout.addWidget(self.query_car_button)
 
         self.result_car_label = QtWidgets.QLabel("")
+        self.result_car_label.setStyleSheet("font-size: 16px;")
         self.query_car_layout.addWidget(self.result_car_label)
 
         '''
-        影片與停車格顯示
+        影片與停車格顯示，目前是以左邊放影片，右邊放停車格狀態的方式呈現
+        可修改方向: 將停車格和車輛的偵測疊在一起
         '''
         self.park_analyze_layout = QtWidgets.QHBoxLayout()
         self.park_video = QMediaPlayer()
@@ -90,18 +109,37 @@ class MainWindow(QtWidgets.QMainWindow):
         self.query_result = None
 
     def park_car(self):
-        license_plate = self.license_input.text()
-        if license_plate:
-            self.parkingLot.enterParkingLot(license_plate)
-            self.parkingLot.parkCar(license_plate)
+        inputLicense = self.license_input.text()
+        car_in_lot = any(car == inputLicense for car in self.parkingLot.getParkedCars())
+    
+        if not car_in_lot:
+            self.parkingLot.enterParkingLot(inputLicense)
+            car = self.parkingLot.parkCar(inputLicense)
+            if car:
+                msg = QtWidgets.QMessageBox()
+                msg.setWindowTitle("停車時間")
+                msg.setText(f"車牌號碼為 {inputLicense} 的車輛已停放，當前時間為 {car.inspace}")
+                msg.exec_()
             self.update_plot()
+        else:
+            print("車輛已在停車場內")
 
     def leave_car(self):
-        license_plate = self.license_input.text()
-        if license_plate:
-            self.parkingLot.leaveCar(license_plate)
-            self.parkingLot.leaveParkingLot(license_plate)
+        inputLicense = self.license_input.text()
+        car_in_lot = any(car.licensePlate == inputLicense for car in self.parkingLot.parkedCars)
+        
+        if car_in_lot:
+            car = self.parkingLot.leaveCar(inputLicense)
+            self.parkingLot.leaveParkingLot(inputLicense)
+            if car:
+                park_duration = car.outspace - car.inspace
+                msg = QtWidgets.QMessageBox()
+                msg.setWindowTitle("離開時間與停車時長")
+                msg.setText(f"車牌號碼為 {inputLicense} 的車輛已離開，當前時間為 {car.outspace}，停車時長為 {park_duration}")
+                msg.exec_()
             self.update_plot()
+        else:
+            print("車輛不在停車場內")
 
     def query_space(self):
         space_id = self.space_input.text()
@@ -109,10 +147,9 @@ class MainWindow(QtWidgets.QMainWindow):
             space_id = int(space_id)
             car_license_plate = self.parkingLot.getCarBySpaceId(space_id)
             if car_license_plate:
-                self.result_space_label.setText(
-                    f"停車位 {space_id} 的車牌號碼為 {car_license_plate}")
+                self.result_space_label.setText(f">停車位 {space_id} 的車牌號碼為 {car_license_plate}。")
             else:
-                self.result_space_label.setText(f"停車位 {space_id} 沒有車輛停放。")
+                self.result_space_label.setText(f">停車位 {space_id} 沒有車輛停放。")
             self.update_plot(highlight_space=space_id)
 
     def query_car(self):
@@ -120,22 +157,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if license_plate:
             space_id = self.parkingLot.getSpaceIdByCar(license_plate)
             if space_id:
-                self.result_car_label.setText(
-                    f"車牌號碼為 {license_plate} 的車子停在 {space_id} 號車位。")
+                self.result_car_label.setText(f">車牌號碼為 {license_plate} 的車子停在 {space_id} 號車位。")
             else:
-                self.result_car_label.setText(
-                    f"車牌號碼為 {license_plate} 的車輛不在停車場內。")
+                self.result_car_label.setText(f">車牌號碼為 {license_plate} 的車輛不在停車場內。")
             self.update_plot(highlight_space=space_id)
 
     def draw_parking_lot(self, parked_spaces):
         """
-        TODO: 修改繪製方法，self.park_spot是根據二值化圖像得到的停車位座標
+        Parameters:
+            parked_spaces: list[int] - 已停車位的編號列表
+        TODO: 修改繪製方法，self.park_spot是根據二值化圖像得到的停車位座標，
+              需要先完成將detect.py中的getSpace方法裡面的TODO部分，再進行此部分。
         """
 
         self.park_spot = self.park_spot[1:]
-        # 先根據x座標進行排序，再根據y座標進行排序
-        sorted_park_spot = sorted(self.park_spot, key=lambda spot: (spot[0], spot[1]))
-
 
         # 定義左側停車格的左下角座標(x, y)，以及長和寬
         x1 = 4

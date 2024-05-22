@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from .util import get_parking_spots_bboxes, getSpotList
+from .util import get_parking_spots_bboxes, getCarList
 
 
 def calc_diff(im1, im2):
@@ -12,7 +12,7 @@ def calc_diff(im1, im2):
 
 def init():
     """
-    Initialize the detection process
+    初始化停車位擷取參數
     """
     cwd = os.getcwd()
     mask = os.path.join(cwd, 'parking_space_counter', 'parking_crop.png')
@@ -44,7 +44,6 @@ def getSpace(spots, cap):
     1. 使用YOLOv8進行車輛檢測
     2. 使用pointPolygonTest函數判斷車輛BBOX是否在停車位內
     3. 顯示停車位的狀態
-    TODO: 將停車位狀態傳回給GUI
     """
     spots_status = [None for j in spots]
     diffs = [None for j in spots]
@@ -76,17 +75,23 @@ def getSpace(spots, cap):
             else:
                 arr_ = [j for j in np.argsort(
                     diffs) if diffs[j] / np.amax(diffs) > 0.4]
-            spotVacancyList = getSpotList(frame)
-            # 測試每個停車位是否有車輛，使用YOLOv8進行車輛檢測，
-            # 並根據pointPolygonTest函數判斷車輛BBOX是否在停車位內
+            
+            """
+            Steps:
+            1. 取得該frame裡面所有車輛的BBOX
+            2. 根據pointPolygonTest函數判斷車輛BBOX是否在停車位內
+            3. 在spots_status中儲存該停車位的狀態
+            TODO: 將spots_status傳回給GUI
+            """
+            carList = getCarList(frame)
             for spot_indx in arr_:
                 spot = spots[spot_indx]
                 x1, y1, w, h = spot
                 area = [(x1, y1), (x1 + w, y1), (x1 + w, y1 + h), (x1, y1 + h)]
                 spot_crop = frame[y1:y1 + h, x1:x1 + w, :]
                 spot_status = True
-                for spotVacancy in spotVacancyList:
-                    x2, y2 = spotVacancy
+                for cars in carList:
+                    x2, y2 = cars
                     if cv2.pointPolygonTest(np.array(area), ((x2, y2)), False) >= 1.0:
                         spot_status = False
                         break

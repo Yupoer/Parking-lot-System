@@ -10,11 +10,11 @@ NOT_EMPTY = False
 
 model = YOLO("yolov8m.pt")
 
-def getSpotList(frame):
+def getCarList(frame):
     """
-    Get the list of parking spots from the frame using YOLOv8
+    使用YOLOv8進行車輛檢測
     """
-    spot_list = []
+    car_list = []
     results = model.predict(frame, show=True)
 
     if torch.cuda.is_available():
@@ -25,16 +25,16 @@ def getSpotList(frame):
         detects = results[0].boxes.data.numpy()
     names = results[0].names
     px = pd.DataFrame(detects).astype("float")
-    for idx, row in px.iterrows():
+    for _, row in px.iterrows():
         x1, y1, x2, y2, _, d = row.astype("int")
 
         if names[d] == 'car':
             cx = int((x1 + x2) / 2)
             cy = int((y1 + y2) / 2)
-            spot_list.append((cx, cy))
+            car_list.append((cx, cy))
 
-    print("spot_list:", spot_list)
-    return spot_list
+    print("car_list:", car_list)
+    return car_list
 
 
 def get_parking_spots_bboxes(connected_components):
@@ -51,6 +51,8 @@ def get_parking_spots_bboxes(connected_components):
         h = int(values[i, cv2.CC_STAT_HEIGHT] * coef)
 
         slots.append([x1, y1, w, h])
+
+    slots = sorted(slots, key=lambda spots: (spots[0], spots[1]))
 
     return slots
 

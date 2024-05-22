@@ -19,6 +19,7 @@ Original file is located at
 
 
 import sys
+import datetime
 import matplotlib.pyplot as plt
 from parking_space_counter import detect
 from PyQt5.QtWidgets import QLabel
@@ -32,96 +33,127 @@ import parking_space_counter.detect as detect
 class Car:
     def __init__(self, licensePlate):
         self.licensePlate = licensePlate
-        self.parked = False
+        self.isPark = False
+        self.inpark = "has not park yet"
+        self.outpark = "has not leave yet"
+        self.inspace = "not in space yet"
+        self.outspace = "not out space yet"
 
     def park(self):
-        if not self.parked:
-            self.parked = True
-            print(f"車牌號碼為 {self.licensePlate} 的車輛現已停放。")
+        if not self.isPark:
+            self.inspace = datetime.datetime.now().replace(microsecond=0)
+            self.isPark = True
+            print(f"{self.inspace} 車牌號碼為 {self.licensePlate} 的車輛現已停放。")
         else:
             print("此車輛已經停放。")
 
     def leave(self):
-        if self.parked:
-            self.parked = False
-            print(f"車牌號碼為 {self.licensePlate} 的車輛已離開停車場。")
+        if self.isPark:
+            self.isPark = False
+            self.outspace = datetime.datetime.now().replace(microsecond=0)
+            print(f"{self.outspace} 車牌號碼為 {self.licensePlate} 的車輛已開始離開停車位。")
         else:
             print("此車輛並未停放。")
 
     def __str__(self):
-        return f"車輛 (車牌號碼: {self.licensePlate})"
-
+        return f"車牌號碼: {self.licensePlate}\n entertime: {self.inpark}\n enterspace: {self.inspace}\n leavespace: {self.outspace}\n leavetime: {self.outpark}\n"
 
 class ParkingLot:
     def __init__(self, capacity):
         self.capacity = capacity
         self.availableSpaces = capacity
-
-        # List to store all parking spaces
-        self.parkingSpaces = [ParkingSpace(spaceId)
-                              for spaceId in range(1, capacity + 1)]
+        self.parkingSpaces = [ParkingSpace(spaceId) for spaceId in range(1, capacity + 1)]
         self.parkedCars = []
 
-    def enterParkingLot(self, car):
+    def enterParkingLot(self, license):
         if self.availableSpaces > 0:
             self.availableSpaces -= 1
-            self.parkedCars.append(car)
-            print(f"車牌號碼為 {car.licensePlate} 的車輛進入停車場。")
-
-            # Automatically park the car upon entering the parking lot
-            self.parkCar(car)
+            now = datetime.datetime.now().replace(microsecond=0)
+            tempcar = Car(license)
+            tempcar.inpark = now
+            self.parkedCars.append(tempcar)
+            print(f"{now} 車牌號碼為 {license} 的車輛進入停車場。")
+            print(f"剩餘車位數：{self.availableSpaces}\n")
         else:
             print("停車場已滿，無法進入。")
 
     def leaveParkingLot(self, licensePlate):
         for car in self.parkedCars:
             if car.licensePlate == licensePlate:
-
-                # Increment available spaces when a car leaves the parking lot
                 self.availableSpaces += 1
-                self.parkedCars.remove(car)
-                print(f"車牌號碼為 {car.licensePlate} 的車輛離開停車場。")
-                return
+                if car.isPark:
+                    car.leave()
+                now = datetime.datetime.now().replace(microsecond=0)
+                car.outpark = now
+                print(f"{now} 車牌號碼為 {car.licensePlate} 的車輛離開停車場。")
+                return car
         print("此車輛並未停放在此停車場。")
+        return None
 
-    def parkCar(self, car):
+    def found(self, license):
+        for car in self.parkedCars:
+            if car.licensePlate == license:
+                return car
+        print("not found")
+        return None
+
+    def parkCar(self, licensePlate):
         for space in self.parkingSpaces:
             if not space.occupied:
+                car = self.found(licensePlate)
                 space.occupy(car)
-                print(f"車牌號碼為 {car.licensePlate} 的車輛現已停放在停車位 {space.spaceId}。")
-                return
+                print(f"車牌號碼為 {licensePlate} 的車輛現已停放在停車位 {space.spaceId}。\n")
+                return car
 
     def leaveCar(self, licensePlate):
         for space in self.parkingSpaces:
-            if space.occupied and space.car.licensePlate == licensePlate:
-                space.leave()
-                return
+            if space.occupied and space.carLicensePlate == licensePlate:
+                self.availableSpaces -= 1
+                car = self.found(licensePlate)
+                space.leave(car)
+                return car
         print("此車輛並未停放在此停車場。")
+        return None
 
     def getAvailableSpaces(self):
         return self.availableSpaces
 
     def getParkedCars(self):
-        return [car for car in self.parkedCars if car in [space.car for space in self.parkingSpaces if space.occupied]]
+        return [space.carLicensePlate for space in self.parkingSpaces if space.occupied]
 
+    def getOccupiedSpaces(self):
+        return [space.spaceId for space in self.parkingSpaces if space.occupied]
+
+    def getCarBySpaceId(self, spaceId):
+        for space in self.parkingSpaces:
+            if space.spaceId == spaceId and space.occupied:
+                return space.carLicensePlate
+        return None
+
+    def getSpaceIdByCar(self, licensePlate):
+        for space in self.parkingSpaces:
+            if space.occupied and space.carLicensePlate == licensePlate:
+                return space.spaceId
+        return None
 
 class ParkingSpace:
     def __init__(self, spaceId):
         self.spaceId = spaceId
         self.occupied = False
-
-        # Variable to store the occupying car
-        self.car = None
+        self.carLicensePlate = None
 
     def occupy(self, car):
         self.occupied = True
-        self.car = car
-        print(f"車牌號碼為 {car.licensePlate} 的車輛已進入停車位 {self.spaceId}。")
+        self.carLicensePlate = car.licensePlate
+        print(f"車牌號碼為 {self.carLicensePlate} 的車輛已進入停車位 {self.spaceId}。")
+        car.park()
 
-    def leave(self):
-        if self.car:
-            print(f"車牌號碼為 {self.car.licensePlate} 的車輛已離開停車位 {self.spaceId}。")
-            self.car = None
+    def leave(self, car):
+        if self.carLicensePlate:
+            car.leave()
+            print(f"車牌號碼為 {self.carLicensePlate} 的車輛已離開停車位 {self.spaceId}。")
+            self.carLicensePlate = None
+            self.occupied = False
         else:
             print(f"停車位 {self.spaceId} 為空。")
 
@@ -132,5 +164,10 @@ if __name__ == "__main__":
     window = MainWindow(ParkingLot, spots)
     window.show()
     window.park_video.play()
+    """
+    detect.getSpace(spots, cap) -> 這個是用來測試的函數
+    TODO: 需要讓他在park_video.play()執行時同步執行
+    """
     detect.getSpace(spots, cap)
+
     sys.exit(app.exec_())
