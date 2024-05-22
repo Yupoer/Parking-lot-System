@@ -18,9 +18,11 @@ def getSpotList(frame):
     results = model.predict(frame, show=True)
 
     if torch.cuda.is_available():
+        print("CUDA is available")
         detects = results[0].boxes.data.cpu().numpy()
     else:
-        detects = results[0].boxes.numpy()
+        print("CUDA is unavailable")
+        detects = results[0].boxes.data.numpy()
     names = results[0].names
     px = pd.DataFrame(detects).astype("float")
     for idx, row in px.iterrows():
