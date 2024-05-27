@@ -38,7 +38,7 @@ def init():
     return spots, cap
 
 
-def getSpace(spots, cap):
+def getSpace(spots, cap, mainwindow):
     """
     取得停車位的狀態
     1. 使用YOLOv8進行車輛檢測
@@ -49,6 +49,7 @@ def getSpace(spots, cap):
     diffs = [None for j in spots]
 
     previous_frame = None
+    prev_spots_status = None
 
     frame_nmr = 0
     ret = True
@@ -81,7 +82,6 @@ def getSpace(spots, cap):
             1. 取得該frame裡面所有車輛的BBOX
             2. 根據pointPolygonTest函數判斷車輛BBOX是否在停車位內
             3. 在spots_status中儲存該停車位的狀態
-            TODO: 將spots_status傳回給GUI
             """
             carList = getCarList(frame)
             for spot_indx in arr_:
@@ -97,6 +97,10 @@ def getSpace(spots, cap):
                         break
 
                 spots_status[spot_indx] = spot_status
+            # 檢查是否有狀態變化，狀態變化時更新 GUI
+            if prev_spots_status is None or spots_status != prev_spots_status:
+                mainwindow.update_plot(spots_status)
+                prev_spots_status = spots_status.copy()
 
         if frame_nmr % step == 0:
             previous_frame = frame.copy()
@@ -113,7 +117,7 @@ def getSpace(spots, cap):
                     frame, (x1, y1), (x1 + w, y1 + h), (0, 0, 255), 2)
 
         cv2.rectangle(frame, (80, 20), (550, 80), (0, 0, 0), -1)
-        cv2.putText(frame, 'Available spots: {} / {}'.format(str(sum(spots_status)), str(len(spots_status))), (100, 60),
+        cv2.putText(frame, 'Available spots: {} / {}'.format(str(sum(spots_status)), str((len(spots_status)-1))), (100, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
         cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
@@ -121,8 +125,9 @@ def getSpace(spots, cap):
 
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
-
+        
         frame_nmr += 1
 
     cap.release()
     cv2.destroyAllWindows()
+    
