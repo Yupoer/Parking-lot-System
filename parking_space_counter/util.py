@@ -15,7 +15,7 @@ def getCarList(frame):
     使用YOLOv8進行車輛檢測
     """
     car_list = []
-    results = model.predict(frame, show=True)
+    results = model.predict(frame, show=False)
 
     if torch.cuda.is_available():
         print("CUDA is available")
