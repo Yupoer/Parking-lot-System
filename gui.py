@@ -96,14 +96,11 @@ class MainWindow(QtWidgets.QMainWindow):
         可修改方向: 將停車格和車輛的偵測疊在一起
         '''
         self.park_analyze_layout = QtWidgets.QHBoxLayout()
-        self.park_video = QMediaPlayer()
-        self.park_video.setMedia(QMediaContent(QtCore.QUrl('./parking_space_counter/spot_detect_trim.avi')))
-        self.video_widget = QVideoWidget()
-        self.video_widget.setFixedSize(640, 480)
-        self.park_video.setVideoOutput(self.video_widget)
+        self.park_video = Figure(figsize=(5, 5), dpi=100)
+        self.park_video_canvas = FigureCanvas(self.park_video)
         self.figure = Figure(figsize=(5, 5), dpi=100)
         self.canvas = FigureCanvas(self.figure)
-        self.park_analyze_layout.addWidget(self.video_widget)
+        self.park_analyze_layout.addWidget(self.park_video_canvas)
         self.park_analyze_layout.addWidget(self.canvas)
         self.layout.addLayout(self.park_analyze_layout)
         
@@ -263,3 +260,10 @@ class MainWindow(QtWidgets.QMainWindow):
         updated_figure = self.draw_parking_lot(parked_spaces)
         self.canvas.figure = updated_figure
         self.canvas.draw()
+
+    def update_video(self, frame):
+        self.park_video.clf()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        ax = self.park_video.add_subplot(111)
+        ax.imshow(frame)
+        self.park_video_canvas.draw()

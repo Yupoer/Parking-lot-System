@@ -20,6 +20,7 @@ Original file is located at
 
 import sys
 import datetime
+import time
 import matplotlib.pyplot as plt
 from parking_space_counter import detect
 from PyQt5.QtWidgets import QLabel
@@ -177,7 +178,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow(ParkingLot, spots)
     window.show()
-    window.park_video.play()
+    #window.park_video.play()
     #window.leave_car("ABC123","17")
     """
     detect.getSpace(spots, cap) -> 這個是用來測試的函數

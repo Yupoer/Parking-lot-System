@@ -115,19 +115,10 @@ def getSpace(spots, cap, mainwindow):
             else:
                 frame = cv2.rectangle(
                     frame, (x1, y1), (x1 + w, y1 + h), (0, 0, 255), 2)
+        if frame_nmr % step == 0:
+            mainwindow.update_video(frame)
 
-        cv2.rectangle(frame, (80, 20), (550, 80), (0, 0, 0), -1)
-        cv2.putText(frame, 'Available spots: {} / {}'.format(str(sum(spots_status)), str((len(spots_status)-1))), (100, 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-        cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
-        cv2.imshow('frame', frame)
-
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-        
         frame_nmr += 1
 
     cap.release()
-    cv2.destroyAllWindows()
     

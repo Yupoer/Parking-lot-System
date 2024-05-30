@@ -180,7 +180,6 @@ def run_pipeline(path, display=False):
                                             classes=CFG.vehicles_class,
                                             device=test_device,
                                             verbose=False,
-
                                             )
 
     df_vehicles = pd.DataFrame(vehicle_results[0].cpu().numpy().boxes.data,
