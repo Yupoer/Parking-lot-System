@@ -1,4 +1,6 @@
 import os
+import re
+
 import cv2
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
@@ -21,27 +23,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.layout = QtWidgets.QVBoxLayout(self.central_widget)
-
-        '''self.input_layout = QtWidgets.QHBoxLayout()
-        self.layout.addLayout(self.input_layout)
-
-        self.label = QtWidgets.QLabel("車牌號碼:")
-        self.label.setStyleSheet("font-size: 16px;")
-        self.input_layout.addWidget(self.label)
-
-        self.license_input = QtWidgets.QLineEdit()
-        self.license_input.setStyleSheet("font-size: 16px;")
-        self.input_layout.addWidget(self.license_input)
-
-        self.park_button = QtWidgets.QPushButton("停車")
-        self.park_button.setStyleSheet("font-size: 16px;")
-        self.park_button.clicked.connect(self.park_car)
-        self.input_layout.addWidget(self.park_button)
-
-        self.leave_button = QtWidgets.QPushButton("離開")
-        self.leave_button.setStyleSheet("font-size: 16px;")
-        self.leave_button.clicked.connect(self.leave_car)
-        self.input_layout.addWidget(self.leave_button)'''
 
         self.query_space_layout = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.query_space_layout)
@@ -107,85 +88,120 @@ class MainWindow(QtWidgets.QMainWindow):
         self.park_spot = spots
         self.parkingLot = ParkingLot(capacity=len(spots))
         self.query_result = None
-        
-        self.car_db_file = 'carDB.txt'
+
+        self.car_db_file = 'carTestFile.txt'
+        #self.car_db_file = 'carDB.txt'
         self.car_db = self.load_car_db()
-        self.space_db_file = 'spaceDB.txt'
+        #self.space_db_file = 'spaceDB.txt'
+        self.space_db_file = 'spaceTestFile.txt'
         self.space_db = self.load_space_db()
-        
+
     def load_car_db(self):
         car_db = {}
+        # 如果車輛數據庫文件存在
         if os.path.exists(self.car_db_file):
+            # 打開車輛數據庫文件以讀模式
             with open(self.car_db_file, 'r', encoding='utf-8') as f:
                 for line in f:
-                    parts = line.strip().split()
+                    parts = line.strip().split()  # 去掉行尾空白並分割為列表
                     if len(parts) >= 3:
+                        # 提取車牌號碼、進場時間和停車位
                         license_plate = parts[0]
-                        enter_time = parts[1] + ' ' + parts[2] 
+                        enter_time = parts[1] + ' ' + parts[2]
                         parking_spot = parts[3]
+                        # 添加到車輛數據庫字典中
                         car_db[license_plate] = (enter_time, parking_spot)
         return car_db
-    
+
     def load_space_db(self):
         space_db = {}
+        # 如果空間數據庫文件存在
         if os.path.exists(self.space_db_file):
+            # 打開空間數據庫文件以讀模式
             with open(self.space_db_file, 'r', encoding='utf-8') as f:
                 for line in f:
-                    parts = line.strip().split()
+                    parts = line.strip().split()  # 去掉行尾空白並分割為列表
                     if len(parts) >= 2:
+                        # 提取停車位和對應的車牌號碼
                         parking_spot = parts[0]
-                        if parts[1].lower() == 'null': 
+                        if parts[1].lower() == 'null':
                             license_plate = None
                         else:
                             license_plate = parts[1]
+                        # 添加到空間數據庫字典中
                         space_db[parking_spot] = license_plate
         return space_db
 
     def park_car(self, license_plate, parking_spot):
-        if license_plate not in self.car_db:
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.car_db[license_plate] = (current_time, parking_spot)
-            with open(self.car_db_file, 'a', encoding='utf-8') as f:
-                f.write(f"{license_plate} {current_time} {parking_spot}\n")
-        
-        if parking_spot in self.space_db:
-            self.space_db[parking_spot] = license_plate
-            with open(self.space_db_file, 'r+', encoding='utf-8') as f:
-                lines = f.readlines()
-                f.seek(0)
-                for line in lines:
-                    parts = line.strip().split()
-                    if parts[0] == parking_spot:
-                        line = f"{parking_spot} {license_plate}\n"
-                    f.write(line)
-                f.truncate()
-        
+        try:
+            # 檢查車牌號碼是否符合要求
+            if len(license_plate) < 6 or len(license_plate) > 7:
+                print("license lens not satisfy the plate format")
+                return
+
+            if license_plate.isdigit() or license_plate.isalpha() or \
+               not re.match("^[A-Z0-9]+$", license_plate):
+                print("not satisfy the plate format")
+                return
+
+            # 如果車牌號碼不在車輛數據庫中
+            if license_plate not in self.car_db:
+                # 獲取當前時間並格式化
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # 在車輛數據庫中添加車牌號碼、時間和停車位的信息
+                self.car_db[license_plate] = (current_time, parking_spot)
+                # 打開車輛數據庫文件並追加新記錄
+                with open(self.car_db_file, 'a', encoding='utf-8') as f:
+                    f.write(f"{license_plate} {current_time} {parking_spot}\n")
+
+            # 如果停車位在空間數據庫中
+            if parking_spot in self.space_db:
+                # 將停車位對應的車牌號碼更新為當前車牌號碼
+                self.space_db[parking_spot] = license_plate
+                # 打開空間數據庫文件以讀寫模式
+                with open(self.space_db_file, 'r+', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    f.seek(0)  # 回到文件開始位置
+                    for line in lines:
+                        parts = line.strip().split()
+                        if parts[0] == parking_spot:
+                            line = f"{parking_spot} {license_plate}\n"
+                        f.write(line)
+                    f.truncate()  # 截斷文件以移除多餘內容
+
+        except Exception as e:
+            # 捕獲異常並打印
+            print(f"Exception occurred: {e}")
 
     def leave_car(self, license_plate, parking_spot):
+        # 如果車牌號碼在車輛數據庫中
         if license_plate in self.car_db:
-            # Remove entry from carDB.txt
+            # 打開車輛數據庫文件並讀取所有行
             with open(self.car_db_file, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
+            # 以寫模式打開車輛數據庫文件，寫入非指定車牌號碼的記錄
             with open(self.car_db_file, 'w', encoding='utf-8') as f:
                 for line in lines:
                     parts = line.strip().split()
                     if parts[0] != license_plate:
                         f.write(line)
 
-            # Update spaceDB.txt to set corresponding parking spot to 'null'
+            # 如果停車位在空間數據庫中
             if parking_spot in self.space_db:
+                # 將停車位對應的車牌號碼設置為'null'
                 self.space_db[parking_spot] = None
+                # 打開空間數據庫文件以讀寫模式
                 with open(self.space_db_file, 'r+', encoding='utf-8') as f:
                     lines = f.readlines()
-                    f.seek(0)
+                    f.seek(0)  # 回到文件開始位置
                     for line in lines:
                         parts = line.strip().split()
                         if parts[0] == parking_spot:
                             line = f"{parking_spot} null\n"
                         f.write(line)
-                    f.truncate()
+                    f.truncate()  # 截斷文件以移除多餘內容
 
-            # Remove entry from car_db dictionary
+            # 從車輛數據庫字典中刪除指定車牌號碼的記錄
             del self.car_db[license_plate]
 
     def query_space(self):

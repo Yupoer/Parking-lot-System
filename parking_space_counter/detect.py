@@ -33,7 +33,7 @@ def init():
 
     spots = get_parking_spots_bboxes(connected_components)
 
-    print("spots:", spots)
+    #print("spots:", spots)
 
     return spots, cap
 

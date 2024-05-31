@@ -230,9 +230,14 @@ for id_class in CFG.vehicles_class:
     dict_classes[id_class] = dict_all_classes[id_class]
 
 # 測試結果
-test_images = glob('car.png')
-df_frame, out_image  = run_pipeline(path = 'car.png', display=True)
-
+test_images = glob('damaged.png')
+df_frame, out_image  = run_pipeline(path = 'car_plate_detector/plate_camera/damaged.png', display=True)
+print(df_frame)
+print(out_image)
+test_images = glob('dirt.png')
+df_frame, out_image  = run_pipeline(path = 'car_plate_detector/plate_camera/dirt.png', display=True)
+print(df_frame)
+print(out_image)
 """
 df_frame: DataFrame with the following columns:
     - xmin: The minimum x-coordinate of the bounding box
@@ -243,4 +248,4 @@ df_frame: DataFrame with the following columns:
     - class: The class of the detection
     - plate_number: The license plate number (if available)
 """
-print(df_frame)
+
