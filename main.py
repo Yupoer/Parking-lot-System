@@ -1,6 +1,5 @@
-
-
 import sys
+import time
 from PyQt5 import QtWidgets, QtCore
 
 from gui import MainWindow
@@ -32,10 +31,12 @@ if __name__ == "__main__":
     window.park_car("333333", "11")
     window.park_car("124EE", "10")
     window.park_car(33, "12")
+    # window.park_car("ABC1752", "17")
+    # window.park_car("ADR2565", "17")
+    # window.leave_car("ABC1752","17")
+    # window.leave_car("BVU6611","7")
+    # window.leave_car("ABC1234","11")
 
-
-    #window.park_video.play()
-    #window.leave_car("ABC123","17")
     """
     detect.getSpace(spots, cap) -> 這個是用來測試的函數
     TODO: 需要讓他在park_video.play()執行時同步執行

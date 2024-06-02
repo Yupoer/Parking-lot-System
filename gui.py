@@ -135,9 +135,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def park_car(self, license_plate, parking_spot):
         try:
             if(self.is_lot_full()):
-                print("Parking lot is full")
+                print(f"Car {license_plate} cannot park in the parking lot, because it is full\n")
                 return
-            print("Parking lot is not full")
+            print(f"Car {license_plate} can park in the parking lot\n")
             # 檢查車牌號碼是否符合要求
             if len(license_plate) < 6 or len(license_plate) > 7:
                 print(f"{license_plate} lens not satisfy the plate format\n")
@@ -178,7 +178,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print(f"Exception occurred: {e}")
 
     def is_lot_full(self):
-        return all(license_plate is not "null" for license_plate in self.space_db.values())
+        return all(license_plate is not None for license_plate in self.space_db.values())
 
     def leave_car(self, license_plate, parking_spot):
         try:
@@ -219,8 +219,6 @@ class MainWindow(QtWidgets.QMainWindow):
                             if parts[0] != car_in_spot:
                                 f.write(line)
 
-                print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate}"
-                      f" 不在車輛數據庫中")
                 print(f"車牌號碼 {license_plate} 不在停車場，無法確認停放時間")
                 print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate} 不在車輛數據庫中")
 
