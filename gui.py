@@ -134,6 +134,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def park_car(self, license_plate, parking_spot):
         try:
+            if(self.is_lot_full()):
+                print("Parking lot is full")
+                return
+            print("Parking lot is not full")
             # 檢查車牌號碼是否符合要求
             if len(license_plate) < 6 or len(license_plate) > 7:
                 print(f"{license_plate} lens not satisfy the plate format\n")
@@ -173,17 +177,23 @@ class MainWindow(QtWidgets.QMainWindow):
             # 捕獲異常並打印
             print(f"Exception occurred: {e}")
 
+    def is_lot_full(self):
+        return all(license_plate is not "null" for license_plate in self.space_db.values())
+
     def leave_car(self, license_plate, parking_spot):
         try:
             car_exists = license_plate in self.car_db
             spot_exists = parking_spot in self.space_db
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # 情況 1: 車牌號碼在車輛數據庫中且停車位在空間數據庫中
             if car_exists and spot_exists:
+                car_park_time = self.car_db[license_plate][0]
                 self._remove_car_from_db(license_plate)
                 self._clear_parking_spot(parking_spot)
                 print(car_exists)
                 print(spot_exists)
+                print(f"車牌號碼 {license_plate} 進場時間為 {car_park_time}，已停車 {parking_spot} 號車位，在 {current_time} 離場。")
                 print(f"車牌號碼 {license_plate} 已從停車位 {parking_spot} 移除")
 
             # 情況 2: 車牌號碼在車輛數據庫中但停車位不在空間數據庫中
@@ -191,6 +201,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._remove_car_from_db(license_plate)
                 print(car_exists)
                 print(spot_exists)
+                print(f"車牌號碼 {license_plate} 進場時間為 {self.car_db[license_plate][0]}，但停車位 {parking_spot} 不在空間數據庫中，並在 {current_time} 離場。")
                 print(f"車牌號碼 {license_plate} 已從車輛數據庫中移除，但停車位 {parking_spot} 不在空間數據庫中")
 
             # 情況 3: 車牌號碼不在車輛數據庫中但停車位在空間數據庫中
@@ -209,6 +220,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                 f.write(line)
                 print(car_exists)
                 print(spot_exists)
+                print(f"車牌號碼 {license_plate} 不在停車場，無法確認停放時間")
                 print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate} 不在車輛數據庫中")
 
             # 情況 4: 車牌號碼和停車位都不在數據庫中
