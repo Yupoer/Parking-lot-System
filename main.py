@@ -1,10 +1,12 @@
-from parkingUI import ParkingLot
+
 
 import sys
 from PyQt5 import QtWidgets, QtCore
 
 from gui import MainWindow
 import parking_space_counter.detect as detect
+from parkingUI import ParkingLot
+
 
 class ParkingThread(QtCore.QThread):
     """
