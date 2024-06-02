@@ -26,7 +26,13 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow(ParkingLot, spots)
     window.show()
-    window.park_car("###", "14")
+
+    #window.leave_car("BVA5892", "12")
+    #window.leave_car("AAW0295", "18")
+    #window.leave_car("XYZ1234", "14")
+    #window.leave_car("XYZ1234", "29")
+
+
     #window.park_video.play()
     #window.leave_car("ABC123","17")
     """

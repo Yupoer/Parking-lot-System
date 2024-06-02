@@ -18,10 +18,10 @@ def getCarList(frame):
     results = model.predict(frame, show=False)
 
     if torch.cuda.is_available():
-        print("CUDA is available")
+        #print("CUDA is available")
         detects = results[0].boxes.data.cpu().numpy()
     else:
-        print("CUDA is unavailable")
+        #print("CUDA is unavailable")
         detects = results[0].boxes.data.numpy()
     names = results[0].names
     px = pd.DataFrame(detects).astype("float")
@@ -33,7 +33,7 @@ def getCarList(frame):
             cy = int((y1 + y2) / 2)
             car_list.append((cx, cy))
 
-    print("car_list:", car_list)
+    #print("car_list:", car_list)
     return car_list
 
 

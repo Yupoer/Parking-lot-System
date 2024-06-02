@@ -136,12 +136,12 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             # 檢查車牌號碼是否符合要求
             if len(license_plate) < 6 or len(license_plate) > 7:
-                print("license lens not satisfy the plate format")
+                print(f"{license_plate} lens not satisfy the plate format\n")
                 return
 
             if license_plate.isdigit() or license_plate.isalpha() or \
                not re.match("^[A-Z0-9]+$", license_plate):
-                print("not satisfy the plate format")
+                print(f"{license_plate} not satisfy the plate format\n")
                 return
 
             # 如果車牌號碼不在車輛數據庫中
@@ -174,35 +174,73 @@ class MainWindow(QtWidgets.QMainWindow):
             print(f"Exception occurred: {e}")
 
     def leave_car(self, license_plate, parking_spot):
-        # 如果車牌號碼在車輛數據庫中
-        if license_plate in self.car_db:
-            # 打開車輛數據庫文件並讀取所有行
-            with open(self.car_db_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-            # 以寫模式打開車輛數據庫文件，寫入非指定車牌號碼的記錄
-            with open(self.car_db_file, 'w', encoding='utf-8') as f:
-                for line in lines:
-                    parts = line.strip().split()
-                    if parts[0] != license_plate:
-                        f.write(line)
+        try:
+            car_exists = license_plate in self.car_db
+            spot_exists = parking_spot in self.space_db
 
-            # 如果停車位在空間數據庫中
-            if parking_spot in self.space_db:
-                # 將停車位對應的車牌號碼設置為'null'
-                self.space_db[parking_spot] = None
-                # 打開空間數據庫文件以讀寫模式
-                with open(self.space_db_file, 'r+', encoding='utf-8') as f:
-                    lines = f.readlines()
-                    f.seek(0)  # 回到文件開始位置
-                    for line in lines:
-                        parts = line.strip().split()
-                        if parts[0] == parking_spot:
-                            line = f"{parking_spot} null\n"
-                        f.write(line)
-                    f.truncate()  # 截斷文件以移除多餘內容
+            # 情況 1: 車牌號碼在車輛數據庫中且停車位在空間數據庫中
+            if car_exists and spot_exists:
+                self._remove_car_from_db(license_plate)
+                self._clear_parking_spot(parking_spot)
+                print(car_exists)
+                print(spot_exists)
+                print(f"車牌號碼 {license_plate} 已從停車位 {parking_spot} 移除")
 
-            # 從車輛數據庫字典中刪除指定車牌號碼的記錄
-            del self.car_db[license_plate]
+            # 情況 2: 車牌號碼在車輛數據庫中但停車位不在空間數據庫中
+            elif car_exists and not spot_exists:
+                self._remove_car_from_db(license_plate)
+                print(car_exists)
+                print(spot_exists)
+                print(f"車牌號碼 {license_plate} 已從車輛數據庫中移除，但停車位 {parking_spot} 不在空間數據庫中")
+
+            # 情況 3: 車牌號碼不在車輛數據庫中但停車位在空間數據庫中
+            elif not car_exists and spot_exists:
+
+                car_in_spot = self.space_db[parking_spot]
+                self._clear_parking_spot(parking_spot)
+                if car_in_spot:
+                    del self.car_db[car_in_spot]
+                    with open(self.car_db_file, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    with open(self.car_db_file, 'w', encoding='utf-8') as f:
+                        for line in lines:
+                            parts = line.strip().split()
+                            if parts[0] != car_in_spot:
+                                f.write(line)
+                print(car_exists)
+                print(spot_exists)
+                print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate} 不在車輛數據庫中")
+
+            # 情況 4: 車牌號碼和停車位都不在數據庫中
+            else:
+                print(car_exists)
+                print(spot_exists)
+                raise Exception("車輛和停車位都不在數據庫中")
+
+        except Exception as e:
+            print(f"Exception occurred: {e}")
+
+    def _remove_car_from_db(self, license_plate):
+        with open(self.car_db_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        with open(self.car_db_file, 'w', encoding='utf-8') as f:
+            for line in lines:
+                parts = line.strip().split()
+                if parts[0] != license_plate:
+                    f.write(line)
+        del self.car_db[license_plate]
+
+    def _clear_parking_spot(self, parking_spot):
+        self.space_db[parking_spot] = None
+        with open(self.space_db_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            f.seek(0)
+            for line in lines:
+                parts = line.strip().split()
+                if parts[0] == parking_spot:
+                    line = f"{parking_spot} null\n"
+                f.write(line)
+            f.truncate()
 
     def query_space(self):
         space_id = self.space_input.text().strip()
