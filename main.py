@@ -1,4 +1,3 @@
-
 from parkingUI import ParkingLot
 
 import sys
