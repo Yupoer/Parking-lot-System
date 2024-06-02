@@ -27,10 +27,10 @@ if __name__ == "__main__":
     window = MainWindow(ParkingLot, spots)
     window.show()
 
-    #window.leave_car("BVA5892", "12")
-    #window.leave_car("AAW0295", "18")
-    #window.leave_car("XYZ1234", "14")
-    #window.leave_car("XYZ1234", "29")
+    window.park_car("##", "14")
+    window.park_car("333333", "11")
+    window.park_car("124EE", "10")
+    window.park_car(33, "12")
 
 
     #window.park_video.play()

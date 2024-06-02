@@ -182,16 +182,13 @@ class MainWindow(QtWidgets.QMainWindow):
             if car_exists and spot_exists:
                 self._remove_car_from_db(license_plate)
                 self._clear_parking_spot(parking_spot)
-                print(car_exists)
-                print(spot_exists)
                 print(f"車牌號碼 {license_plate} 已從停車位 {parking_spot} 移除")
 
             # 情況 2: 車牌號碼在車輛數據庫中但停車位不在空間數據庫中
             elif car_exists and not spot_exists:
                 self._remove_car_from_db(license_plate)
-                print(car_exists)
-                print(spot_exists)
-                print(f"車牌號碼 {license_plate} 已從車輛數據庫中移除，但停車位 {parking_spot} 不在空間數據庫中")
+                print(f"車牌號碼 {license_plate} 已從車輛數據庫中移除，但停車位"
+                      f" {parking_spot} 不在空間數據庫中")
 
             # 情況 3: 車牌號碼不在車輛數據庫中但停車位在空間數據庫中
             elif not car_exists and spot_exists:
@@ -207,14 +204,12 @@ class MainWindow(QtWidgets.QMainWindow):
                             parts = line.strip().split()
                             if parts[0] != car_in_spot:
                                 f.write(line)
-                print(car_exists)
-                print(spot_exists)
-                print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate} 不在車輛數據庫中")
+
+                print(f"停車位 {parking_spot} 已清空，但車牌號碼 {license_plate}"
+                      f" 不在車輛數據庫中")
 
             # 情況 4: 車牌號碼和停車位都不在數據庫中
             else:
-                print(car_exists)
-                print(spot_exists)
                 raise Exception("車輛和停車位都不在數據庫中")
 
         except Exception as e:
